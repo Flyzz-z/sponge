@@ -17,6 +17,8 @@ class StreamReassembler {
     size_t _capacity;    //!< The maximum number of bytes
     uint64_t next_index;
     size_t unassem_n;
+    uint64_t eof_index;
+    bool eof_f;
 
     class SeqData {
       public:
