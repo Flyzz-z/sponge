@@ -26,7 +26,7 @@ void StreamReassembler::push_substring(const string &data, const size_t index, c
     }
     if(next_index<index+data.size()) {
         size_t n_index = max(next_index,index);
-        push_data(data.substr(n_index-index,data.size()),n_index);
+        push_data(data.substr(n_index-index,data.size()-(n_index-index)),n_index);
     }
  
     write_data();
@@ -51,6 +51,7 @@ void StreamReassembler::push_data(const std::string &data, const uint64_t index)
         uint64_t it_st = it->index, it_ed = it->index + it->data.size();
 
         if (it_st <= index && it_ed >= ed) {
+            last_index = ed;
             break;
         } else if (it_st < st && it_ed > st) {
             in_data.append(it->data);
@@ -59,12 +60,12 @@ void StreamReassembler::push_data(const std::string &data, const uint64_t index)
             unassem_n -= it->data.size();
             seq_set.erase(it++);
         } else if (it_st >= st && it_ed <= ed) {
-            in_data.append(data.substr(last_index-st,it_ed-st));
+            in_data.append(data.substr(last_index-st,it_ed-last_index));
             unassem_n -= it->data.size();
             seq_set.erase(it++);
             last_index = it_ed;
         } else if (it_st > st && it_ed > ed) {
-            if(it_st>last_index) in_data.append(data.substr(last_index-st,it_st-st));
+            if(it_st>last_index) in_data.append(data.substr(last_index-st,it_st-last_index));
             in_data.append(it->data);
             unassem_n -= it->data.size();
             seq_set.erase(it++);
@@ -75,7 +76,7 @@ void StreamReassembler::push_data(const std::string &data, const uint64_t index)
     }
 
     if(ed>last_index) {
-        in_data.append(data.substr(last_index-st,ed-st));
+        in_data.append(data.substr(last_index-st,ed-last_index));
     }
     if(in_data.size()!=0) {
         SeqData in_seq_data(in_data,in_index);
