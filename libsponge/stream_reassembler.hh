@@ -5,6 +5,7 @@
 
 #include <cstdint>
 #include <string>
+#include <set>
 
 //! \brief A class that assembles a series of excerpts from a byte stream (possibly out of order,
 //! possibly overlapping) into an in-order byte stream.
@@ -14,6 +15,25 @@ class StreamReassembler {
 
     ByteStream _output;  //!< The reassembled in-order byte stream
     size_t _capacity;    //!< The maximum number of bytes
+    uint64_t next_index;
+    size_t unassem_n;
+
+    class SeqData {
+      public:
+        const std::string data;
+        uint64_t index;
+
+        SeqData(const std::string _data,const uint64_t _index):data(_data),index(_index){}
+        bool operator<(const SeqData &rhs) const {
+          return index<rhs.index;
+        }
+    };
+
+    std::set<StreamReassembler::SeqData> seq_set;
+
+    void push_data(const std::string &data,const uint64_t index);
+
+    void write_data();
 
   public:
     //! \brief Construct a `StreamReassembler` that will store up to `capacity` bytes.
