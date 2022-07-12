@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <ostream>
 
+
 //! \brief A 32-bit integer, expressed relative to an arbitrary initial sequence number (ISN)
 //! \note This is used to express TCP sequence numbers (seqno) and acknowledgment numbers (ackno)
 class WrappingInt32 {
@@ -62,4 +63,5 @@ inline WrappingInt32 operator+(WrappingInt32 a, uint32_t b) { return WrappingInt
 inline WrappingInt32 operator-(WrappingInt32 a, uint32_t b) { return a + -b; }
 //!@}
 
+const uint64_t MOD = 0XFFFFFFFF + 1UL;
 #endif  // SPONGE_LIBSPONGE_WRAPPING_INTEGERS_HH
