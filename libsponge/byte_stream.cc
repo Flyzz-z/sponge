@@ -47,10 +47,10 @@ string ByteStream::peek_output(const size_t len) const {
 }
 
 //! \param[in] len bytes will be removed from the output side of the buffer
-void ByteStream::pop_output(const size_t len) { 
-    //DUMMY_CODE(len); 
+void ByteStream::pop_output(const size_t len) {
+    // DUMMY_CODE(len);
     int m_len = std::min(len, buf.size());
-    while(m_len--) {
+    while (m_len--) {
         buf.pop_front();
         nRead += 1;
     }
@@ -60,7 +60,7 @@ void ByteStream::pop_output(const size_t len) {
 //! \param[in] len bytes will be popped and returned
 //! \returns a string
 std::string ByteStream::read(const size_t len) {
-    //DUMMY_CODE(len);
+    // DUMMY_CODE(len);
     string res = peek_output(len);
     pop_output(len);
     return res;

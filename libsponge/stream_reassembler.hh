@@ -4,8 +4,8 @@
 #include "byte_stream.hh"
 
 #include <cstdint>
-#include <string>
 #include <set>
+#include <string>
 
 //! \brief A class that assembles a series of excerpts from a byte stream (possibly out of order,
 //! possibly overlapping) into an in-order byte stream.
@@ -25,15 +25,13 @@ class StreamReassembler {
         const std::string data;
         uint64_t index;
 
-        SeqData(const std::string _data,const uint64_t _index):data(_data),index(_index){}
-        bool operator<(const SeqData &rhs) const {
-          return index<rhs.index;
-        }
+        SeqData(const std::string _data, const uint64_t _index) : data(_data), index(_index) {}
+        bool operator<(const SeqData &rhs) const { return index < rhs.index; }
     };
 
     std::set<StreamReassembler::SeqData> seq_set;
 
-    void push_data(const std::string &data,const uint64_t index);
+    void push_data(const std::string &data, const uint64_t index);
 
     void write_data();
 
