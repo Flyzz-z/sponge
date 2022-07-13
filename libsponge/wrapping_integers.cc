@@ -35,12 +35,13 @@ uint64_t unwrap(WrappingInt32 n, WrappingInt32 isn, uint64_t checkpoint) {
     uint64_t re = static_cast<uint32_t>(checkpoint);
     uint64_t m = checkpoint - re + ex;
     uint64_t ab_seq_no = m,dis = max(checkpoint,m) - min(checkpoint,m);
-    if(m>=(1UL<<32)) {
-
+    if(m>=(1UL<<32)&&(1UL<<32)+re-ex<dis) {
+        ab_seq_no = m - (1UL<<32);
+        dis = (1UL<<32)+re-ex;
     }
-    
-    uint64_t r = checkpoint - re + (1UL << 32) + ex;
-    uint64_t ld = re>=ex?re-ex:ex-re;
-    uint64_t rd = (1UL << 32) - re + ex;
-    return ld < rd ? l : r;
+    if(m<=INT64_MAX-(1UL<<32)&&(1UL<<32)-re+ex<dis) {
+        ab_seq_no = m + (1UL<<32);
+        dis = (1UL<<32)-re+ex;
+    }
+    return ab_seq_no;
 }
