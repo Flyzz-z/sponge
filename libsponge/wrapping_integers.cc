@@ -30,9 +30,15 @@ WrappingInt32 wrap(uint64_t n, WrappingInt32 isn) {
 //! has a different ISN.
 uint64_t unwrap(WrappingInt32 n, WrappingInt32 isn, uint64_t checkpoint) {
     // DUMMY_CODE(n, isn, checkpoint);
-    uint64_t ex = static_cast<uint64_t>(n - isn);
+    uint32_t ex_v = n - isn;
+    uint64_t ex = static_cast<uint64_t>(ex_v);
     uint64_t re = static_cast<uint32_t>(checkpoint);
-    uint64_t l = checkpoint - re + ex;
+    uint64_t m = checkpoint - re + ex;
+    uint64_t ab_seq_no = m,dis = max(checkpoint,m) - min(checkpoint,m);
+    if(m>=(1UL<<32)) {
+
+    }
+    
     uint64_t r = checkpoint - re + (1UL << 32) + ex;
     uint64_t ld = re>=ex?re-ex:ex-re;
     uint64_t rd = (1UL << 32) - re + ex;
