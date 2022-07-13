@@ -111,3 +111,7 @@ void StreamReassembler::write_data() {
         _output.end_input();
     }
 }
+
+uint64_t StreamReassembler::next_index() const{
+    return _next_index;
+}
