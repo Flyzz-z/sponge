@@ -15,10 +15,10 @@ class StreamReassembler {
 
     ByteStream _output;  //!< The reassembled in-order byte stream
     size_t _capacity;    //!< The maximum number of bytes
-    uint64_t next_index;
-    size_t unassem_n;
-    uint64_t eof_index;
-    bool eof_f;
+    uint64_t _next_index;
+    size_t _unassem_n;
+    uint64_t _eof_index;
+    bool _eof_f;
 
     class SeqData {
       public:
@@ -66,6 +66,8 @@ class StreamReassembler {
     //! \brief Is the internal state empty (other than the output stream)?
     //! \returns `true` if no substrings are waiting to be assembled
     bool empty() const;
+
+    uint64_t next_index() const;
 };
 
 #endif  // SPONGE_LIBSPONGE_STREAM_REASSEMBLER_HH
