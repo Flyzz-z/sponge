@@ -8,6 +8,7 @@
 
 #include <functional>
 #include <queue>
+#include <set>
 
 //! \brief The "sender" part of a TCP implementation.
 
@@ -31,6 +32,27 @@ class TCPSender {
 
     //! the (absolute) sequence number for the next byte to be sent
     uint64_t _next_seqno{0};
+
+    size_t _window_size{1};
+
+    bool _close{false};
+
+    class UnackSegment {
+      public:
+        uint64_t _seqno;
+        TCPSegment _tcp_segment_unack;
+        UnackSegment(uint64_t seqno,TCPSegment tcp_segment):
+        _seqno(seqno),_tcp_segment_unack(tcp_segment){}
+        bool operator < (const UnackSegment& rhs) const{
+          return _seqno < rhs._seqno;
+        }
+
+    };
+
+    std::set<UnackSegment> _segments_unack{};
+
+    uint64_t _flight_bytes{0};
+
 
   public:
     //! Initialize a TCPSender
