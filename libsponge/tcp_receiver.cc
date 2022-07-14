@@ -21,11 +21,11 @@ void TCPReceiver::segment_received(const TCPSegment &seg) {
     if(!_isn_set) return;
 
     if(tcp_header.fin) _fin = true;
-    WrappingInt32 seq_no = tcp_header.seqno;
-    uint64_t ab_seq_no = unwrap(seq_no,_isn,tcp_header.syn?_reassembler.next_index():0);
-    // ab_seq_no==0 without syn, wrong
-    if(ab_seq_no==0&&!tcp_header.syn) return;
-    uint64_t str_index = ab_seq_no==0?unwrap(seq_no+1,_isn,0)-1:ab_seq_no-1;
+    WrappingInt32 seqno = tcp_header.seqno;
+    uint64_t ab_seqno = unwrap(seqno,_isn,tcp_header.syn?_reassembler.next_index():0);
+    // ab_seqno==0 without syn, wrong
+    if(ab_seqno==0&&!tcp_header.syn) return;
+    uint64_t str_index = ab_seqno==0?unwrap(seqno+1,_isn,0)-1:ab_seqno-1;
     auto data = seg.payload().str();
     string full_data(data.begin(),data.end());
     _reassembler.push_substring(full_data,str_index,tcp_header.fin);
@@ -36,8 +36,8 @@ optional<WrappingInt32> TCPReceiver::ackno() const {
     if(!_isn_set) {
         return {}; 
     } else {
-        uint64_t ab_seq_no = _reassembler.next_index() + 1 + (_fin&&_reassembler.empty());
-        return optional(wrap(ab_seq_no,_isn));
+        uint64_t ab_seqno = _reassembler.next_index() + 1 + (_fin&&_reassembler.empty());
+        return optional(wrap(ab_seqno,_isn));
     }
     
 }
