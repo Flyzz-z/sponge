@@ -6,9 +6,42 @@
 #include "tcp_segment.hh"
 #include "wrapping_integers.hh"
 
-#include <functional>
 #include <queue>
 #include <set>
+#include<cassert>
+
+class RetransmissionTimer
+{
+private:
+    std::size_t _total_ms{};
+    unsigned int _rto{};
+    bool _start{false};
+public:
+    bool timeout() {
+        return _total_ms >= _rto;
+    }
+    void add_time(const size_t ms_since_last_tick) {
+        _total_ms += ms_since_last_tick;
+    }
+    void start(unsigned int rto) {
+        _rto = rto;
+        _start = true;
+        _total_ms = 0UL;
+    }
+    void stop() {
+        _rto = 0U;
+        _total_ms = 0UL;
+        _start = false;
+    }
+    void reset(unsigned int rto) {
+      if(!_start) return;
+      _rto = rto;
+      _total_ms = 0UL;
+    }
+    bool working() {
+        return _start;
+    }
+};
 
 //! \brief The "sender" part of a TCP implementation.
 
@@ -37,6 +70,14 @@ class TCPSender {
 
     bool _close{false};
 
+    RetransmissionTimer _rt_timer{};
+
+    unsigned int _timeout;
+
+    unsigned _retry_count{0};
+
+    // recive max ackno
+    uint64_t _max_ackno{0};
     class UnackSegment {
       public:
         uint64_t _seqno;
@@ -110,5 +151,8 @@ class TCPSender {
     WrappingInt32 next_seqno() const { return wrap(_next_seqno, _isn); }
     //!@}
 };
+
+
+
 
 #endif  // SPONGE_LIBSPONGE_TCP_SENDER_HH
