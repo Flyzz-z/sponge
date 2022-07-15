@@ -25,6 +25,8 @@ TCPSender::TCPSender(const size_t capacity, const uint16_t retx_timeout, const s
 uint64_t TCPSender::bytes_in_flight() const { return _flight_bytes; }
 
 void TCPSender::fill_window() {
+    if(_window_size<=_flight_bytes) return;
+    size_t free_window = _window_size - _flight_bytes;
     // close
     if (_close)
         return;
@@ -33,18 +35,18 @@ void TCPSender::fill_window() {
     // syn
     if (_next_seqno == 0) {
         tcp_header.syn = true;
+        free_window -= 1;
     }
     tcp_header.seqno = wrap(_next_seqno, _isn);
 
     // eof
-    if (_stream.eof()) {
+    if (_stream.eof()&&free_window>0&&_flight_bytes==0) {
         _close = true;
         tcp_header.fin = true;
+        free_window -=1;
     }
 
-    size_t read_size;
-    if(_window_size==0) read_size==1;
-    string data = _stream.read(_window_size == 0 ? 1 : _window_size);
+    string data = _stream.read(free_window);
 
     Buffer &buffer = tcp_segment.payload();
     Buffer buffer1(static_cast<std::string &&>(data));
@@ -53,6 +55,8 @@ void TCPSender::fill_window() {
     // send
     if (buffer.size() == 0 && !(tcp_header.syn | tcp_header.fin))
         return;
+
+    // push out and insert into unack_segments
     _segments_out.push(tcp_segment);
     _segments_unack.insert(UnackSegment(_next_seqno, tcp_segment));
     _flight_bytes += tcp_segment.length_in_sequence_space();
@@ -63,7 +67,7 @@ void TCPSender::fill_window() {
 //! \param window_size The remote receiver's advertised window size
 void TCPSender::ack_received(const WrappingInt32 ackno, const uint16_t window_size) {
     // DUMMY_CODE(ackno, window_size);
-    _window_size = window_size;
+    _window_size = window_size==0?1:window_size;
     uint64_t ab_ackno = unwrap(ackno, _isn, _next_seqno);
     UnackSegment segment_ack(ab_ackno, {});
 
@@ -78,7 +82,8 @@ void TCPSender::ack_received(const WrappingInt32 ackno, const uint16_t window_si
        } else it1++;
     }
 
-    //todo 再充满
+    //re fill
+    fill_window();
 }
 
 //! \param[in] ms_since_last_tick the number of milliseconds since the last call to this method
