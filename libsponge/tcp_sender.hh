@@ -90,7 +90,7 @@ class TCPSender {
 
     };
 
-    std::set<UnackSegment> _segments_unack{};
+    std::queue<UnackSegment> _segments_unack{};
 
     uint64_t _flight_bytes{0};
 

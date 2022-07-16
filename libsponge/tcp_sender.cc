@@ -66,7 +66,7 @@ void TCPSender::fill_window() {
 
         // push out and insert into unack_segments
         _segments_out.push(tcp_segment);
-        _segments_unack.insert(UnackSegment(_next_seqno, tcp_segment));
+        _segments_unack.push(UnackSegment(_next_seqno, tcp_segment));
         _flight_bytes += tcp_segment.length_in_sequence_space();
         _next_seqno = _next_seqno + tcp_segment.length_in_sequence_space();
 
@@ -93,13 +93,15 @@ void TCPSender::ack_received(const WrappingInt32 ackno, const uint16_t window_si
     if (_segments_unack.empty() || ab_ackno <= _max_ackno || ab_ackno > _next_seqno) {
     } else {
         _max_ackno = ab_ackno;
-        auto it = _segments_unack.lower_bound(segment_ack);
-        for (auto it1 = _segments_unack.begin(); it1 != it;) {
-            if (it1->_seqno + it1->_tcp_segment_unack.length_in_sequence_space() <= ab_ackno) {
-                _flight_bytes -= it1->_tcp_segment_unack.length_in_sequence_space();
-                _segments_unack.erase(it1++);
-            } else
-                it1++;
+
+        while(!_segments_unack.empty()) {
+            UnackSegment u_segment =  _segments_unack.front();
+            if(u_segment._tcp_segment_unack.length_in_sequence_space() + u_segment._seqno<=ab_ackno) {
+                _flight_bytes -= u_segment._tcp_segment_unack.length_in_sequence_space();
+                _segments_unack.pop();
+            } else {
+                break;
+            }
         }
 
         _timeout = _initial_retransmission_timeout;
@@ -123,8 +125,7 @@ void TCPSender::tick(const size_t ms_since_last_tick) {
     _rt_timer.add_time(ms_since_last_tick);
     if (_rt_timer.timeout()) {
         assert(!_segments_unack.empty());
-        auto it = _segments_unack.begin();
-        _segments_out.push(it->_tcp_segment_unack);
+        _segments_out.push(_segments_unack.front()._tcp_segment_unack);
         if (_window_size != 0) {
             if (++_retry_count + 1 > TCPConfig::MAX_RETX_ATTEMPTS) {
                 //_retry_count = 0;
