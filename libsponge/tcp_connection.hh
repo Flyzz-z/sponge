@@ -105,6 +105,8 @@ class TCPConnection {
 
     bool check_inbound_end();
     bool check_outbound_end();
+
+    void send_rst();
 };
 
 #endif  // SPONGE_LIBSPONGE_TCP_FACTORED_HH
