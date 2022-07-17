@@ -80,6 +80,6 @@ void TCPConnection::set_sender_ack_win() {
     optional<WrappingInt32> op_ackno = _receiver.ackno();
     if (op_ackno.has_value()) {
         _sender.set_ack(op_ackno.value());
+        _sender.set_recv_win_size(win_size);
     }
-    _sender.set_recv_win_size(win_size);
 }
