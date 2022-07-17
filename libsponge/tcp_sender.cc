@@ -48,13 +48,7 @@ void TCPSender::fill_window() {
             free_window -= 1;
         }
 
-        if(_send_ackno.has_value()) {
-            tcp_header.ack = true;
-            tcp_header.ackno = _send_ackno.value();
-        }
-
-        // set recv win
-        tcp_header.win = _recv_win_size;
+        set_send_header(tcp_header);
         tcp_header.seqno = wrap(_next_seqno, _isn);
         Buffer &buffer = tcp_segment.payload();
         size_t len = std::min(TCPConfig::MAX_PAYLOAD_SIZE,data.size()-i);
@@ -80,7 +74,6 @@ void TCPSender::fill_window() {
 
         if(i>=data.size()) break;
     }
-
 
 
     // start timer
@@ -143,6 +136,7 @@ void TCPSender::tick(const size_t ms_since_last_tick) {
     if (_rt_timer.timeout()) {
         assert(!_segments_unack.empty());
         auto &it = _segments_unack.front();
+        set_send_header(it._tcp_segment_unack.header());
         _segments_out.push(it._tcp_segment_unack);
         if (_recv_win_size != 0) {
             if (++_retry_count + 1 > TCPConfig::MAX_RETX_ATTEMPTS) {
@@ -159,11 +153,14 @@ unsigned int TCPSender::consecutive_retransmissions() const { return _retry_coun
 void TCPSender::send_empty_segment() {
     TCPSegment tcp_segment;
     // not occupy isn
-    tcp_segment.header().seqno = wrap(_next_seqno, _isn);
-    if(_send_ackno.has_value()) {
-        tcp_segment.header().ack = true;
-        tcp_segment.header().ackno = _send_ackno.value();
-    }
-    tcp_segment.header().win = _send_win_size;
+    set_send_header(tcp_segment.header());
     _segments_out.push(tcp_segment);
+}
+
+void TCPSender::set_send_header(TCPHeader &tcp_header) {
+    if(_send_ackno.has_value()) {
+        tcp_header.ack = true;
+        tcp_header.ackno = _send_ackno.value();
+    }
+    tcp_header.win = _send_win_size;
 }

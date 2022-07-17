@@ -166,6 +166,8 @@ class TCPSender {
       _recv_win_size = win_size;
     }
 
+    // 设置ackno win
+    void set_send_header(TCPHeader &tcp_header);
 };
 
 
