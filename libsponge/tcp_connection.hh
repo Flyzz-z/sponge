@@ -20,6 +20,7 @@ class TCPConnection {
     //! for 10 * _cfg.rt_timeout milliseconds after both streams have ended,
     //! in case the remote TCPConnection doesn't know we've received its whole stream?
     bool _linger_after_streams_finish{true};
+    bool _active{};
 
   public:
     //! \name "Input" interface for the writer
@@ -94,6 +95,8 @@ class TCPConnection {
     TCPConnection(const TCPConnection &other) = delete;
     TCPConnection &operator=(const TCPConnection &other) = delete;
     //!@}
+
+    void set_sender_ack_win();
 };
 
 #endif  // SPONGE_LIBSPONGE_TCP_FACTORED_HH

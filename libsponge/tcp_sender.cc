@@ -161,6 +161,6 @@ void TCPSender::set_send_header(TCPHeader &tcp_header) {
     if(_send_ackno.has_value()) {
         tcp_header.ack = true;
         tcp_header.ackno = _send_ackno.value();
+        tcp_header.win = _send_win_size;
     }
-    tcp_header.win = _send_win_size;
 }
