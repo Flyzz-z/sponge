@@ -32,6 +32,7 @@ void TCPConnection::segment_received(const TCPSegment &seg) {
     }
 
     _receiver.segment_received(seg);
+    if(! _receiver.ackno().has_value()) return;
 
     if (tcp_header.ack) {
         _sender.ack_received(tcp_header.ackno, tcp_header.win);
@@ -43,10 +44,12 @@ void TCPConnection::segment_received(const TCPSegment &seg) {
     }
 
 
-    bool is_send = real_send();
     if (seg.header().fin)
         _recv_fin = true;
-    if (seg.length_in_sequence_space() != 0 && !is_send) {
+    if (seg.length_in_sequence_space() != 0) {
+        _sender.fill_window();
+        bool is_send = real_send();
+        if(!is_send)
         _sender.send_empty_segment();
     }
 
