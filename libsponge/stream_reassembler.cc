@@ -37,7 +37,13 @@ size_t StreamReassembler::unassembled_bytes() const { return _unassem_n; }
 bool StreamReassembler::empty() const { return seq_set.size() == 0; }
 
 void StreamReassembler::push_data(const std::string &data, const uint64_t index) {
-    SeqData seq_data(data, index);
+    
+    size_t r_win = _next_index + _capacity - _output.buffer_size();
+    size_t data_len = data.size();
+    if(index+data.size()>r_win) {
+        data_len = r_win - index;
+    } 
+    SeqData seq_data(data.substr(0,data_len), index);
     std::set<SeqData>::iterator it = seq_set.lower_bound(seq_data);
     if (it != seq_set.begin()) {
         it--;
