@@ -25,8 +25,8 @@ void TCPConnection::segment_received(const TCPSegment &seg) {
     _time_since_last_seg_recv = 0;
     const TCPHeader &tcp_header = seg.header();
     if (tcp_header.rst) {
-        _sender.stream_in().error();
-        _receiver.stream_out().error();
+        _sender.stream_in().set_error();
+        _receiver.stream_out().set_error();
         // todo close connection
         _active = false;
     }
