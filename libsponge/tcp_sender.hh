@@ -152,8 +152,6 @@ class TCPSender {
     WrappingInt32 next_seqno() const { return wrap(_next_seqno, _isn); }
     //!@}
 
-    void send_rst_seg();
-
     bool close_send() {return _close;}
 
 };

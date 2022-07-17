@@ -132,7 +132,7 @@ void TCPSender::tick(const size_t ms_since_last_tick) {
         }
         if (_recv_win_size != 0) {
             if (++_retry_count > TCPConfig::MAX_RETX_ATTEMPTS) {
-                //_retry_count = 0;
+                return;
             }
             _timeout *= 2;
         }
@@ -153,9 +153,3 @@ void TCPSender::send_empty_segment() {
 
 
 
-void TCPSender::send_rst_seg() {
-    TCPSegment tcp_segment;
-    tcp_segment.header().seqno = wrap(_next_seqno,_isn);
-    tcp_segment.header().rst = true;
-    _segments_out.push(tcp_segment);
-}
