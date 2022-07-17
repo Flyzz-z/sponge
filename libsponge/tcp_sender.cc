@@ -35,10 +35,9 @@ void TCPSender::fill_window() {
         return;
 
 
-    string data = _stream.read(free_window);
-    free_window -= data.size();
+    // free_window -= data.size();
 
-    for (size_t i = 0; ; i += std::min(TCPConfig::MAX_PAYLOAD_SIZE, data.size() - i)) {
+    for (;;) {
 
         TCPSegment tcp_segment;
         TCPHeader &tcp_header = tcp_segment.header();
@@ -47,12 +46,13 @@ void TCPSender::fill_window() {
             tcp_header.syn = true;
             free_window -= 1;
         }
-
-        set_send_header(tcp_header);
         tcp_header.seqno = wrap(_next_seqno, _isn);
+        size_t len = std::min(free_window,TCPConfig::MAX_PAYLOAD_SIZE);
+        string data = _stream.read(len);
+
         Buffer &buffer = tcp_segment.payload();
-        size_t len = std::min(TCPConfig::MAX_PAYLOAD_SIZE,data.size()-i);
-        Buffer buffer1(static_cast<std::string &&>(data.substr(i,len)));
+        free_window -= data.size();
+        Buffer buffer1(static_cast<std::string &&>(data));
         buffer = buffer1;
 
             // eof
@@ -64,7 +64,7 @@ void TCPSender::fill_window() {
 
         // send
         if (buffer.size() == 0 && !(tcp_header.syn | tcp_header.fin))
-            break;;
+            break;
 
         // push out and insert into unack_segments
         _segments_out.push(tcp_segment);
@@ -72,9 +72,8 @@ void TCPSender::fill_window() {
         _flight_bytes += tcp_segment.length_in_sequence_space();
         _next_seqno = _next_seqno + tcp_segment.length_in_sequence_space();
 
-        if(i>=data.size()) break;
+        if(_stream.remaining_capacity()==0||free_window==0) break;
     }
-
 
     // start timer
     if (!_rt_timer.working()) {
@@ -94,14 +93,6 @@ void TCPSender::ack_received(const WrappingInt32 ackno, const uint16_t window_si
     if (_segments_unack.empty() || ab_ackno <= _max_ackno || ab_ackno > _next_seqno) {
     } else {
         _max_ackno = ab_ackno;
-        // auto it = _segments_unack.lower_bound(segment_ack);
-        // for (auto it1 = _segments_unack.begin(); it1 != it;) {
-        //     if (it1->_seqno + it1->_tcp_segment_unack.length_in_sequence_space() <= ab_ackno) {
-        //         _flight_bytes -= it1->_tcp_segment_unack.length_in_sequence_space();
-        //         _segments_unack.erase(it1++);
-        //     } else
-        //         it1++;
-        // }
         while(!_segments_unack.empty()) {
             UnackSegment u_segment =  _segments_unack.front();
             if(u_segment._tcp_segment_unack.length_in_sequence_space() + u_segment._seqno<=ab_ackno) {
@@ -111,8 +102,6 @@ void TCPSender::ack_received(const WrappingInt32 ackno, const uint16_t window_si
                 break;
             }
         }
-
-
 
         _timeout = _initial_retransmission_timeout;
         if (_flight_bytes == 0) {
@@ -134,16 +123,21 @@ void TCPSender::tick(const size_t ms_since_last_tick) {
         return;
     _rt_timer.add_time(ms_since_last_tick);
     if (_rt_timer.timeout()) {
-        assert(!_segments_unack.empty());
-        auto &it = _segments_unack.front();
-        set_send_header(it._tcp_segment_unack.header());
-        _segments_out.push(it._tcp_segment_unack);
+        //assert(!_segments_unack.empty());
+        if(_segments_unack.size()==0) {
+            _rt_timer.stop();
+            _retry_count = 0;
+            _timeout = _initial_retransmission_timeout;
+            return;
+        }
         if (_recv_win_size != 0) {
-            if (++_retry_count + 1 > TCPConfig::MAX_RETX_ATTEMPTS) {
+            if (++_retry_count > TCPConfig::MAX_RETX_ATTEMPTS) {
                 //_retry_count = 0;
             }
             _timeout *= 2;
         }
+        auto &it = _segments_unack.front();
+        _segments_out.push(it._tcp_segment_unack);
         _rt_timer.reset(_timeout);
     }
 }
@@ -153,14 +147,15 @@ unsigned int TCPSender::consecutive_retransmissions() const { return _retry_coun
 void TCPSender::send_empty_segment() {
     TCPSegment tcp_segment;
     // not occupy isn
-    set_send_header(tcp_segment.header());
+    tcp_segment.header().seqno = wrap(_next_seqno,_isn);
     _segments_out.push(tcp_segment);
 }
 
-void TCPSender::set_send_header(TCPHeader &tcp_header) {
-    if(_send_ackno.has_value()) {
-        tcp_header.ack = true;
-        tcp_header.ackno = _send_ackno.value();
-        tcp_header.win = _send_win_size;
-    }
+
+
+void TCPSender::send_rst_seg() {
+    TCPSegment tcp_segment;
+    tcp_segment.header().seqno = wrap(_next_seqno,_isn);
+    tcp_segment.header().rst = true;
+    _segments_out.push(tcp_segment);
 }

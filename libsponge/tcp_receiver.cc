@@ -25,6 +25,8 @@ void TCPReceiver::segment_received(const TCPSegment &seg) {
     uint64_t ab_seqno = unwrap(seqno,_isn,tcp_header.syn?_reassembler.next_index():0);
     // ab_seqno==0 without syn, wrong
     if(ab_seqno==0&&!tcp_header.syn) return;
+    // out of window range
+    //if(ab_seqno>=_reassembler.next_index() + 1 + (_fin&&_reassembler.empty()) + window_size()) return;
     uint64_t str_index = ab_seqno==0?unwrap(seqno+1,_isn,0)-1:ab_seqno-1;
     auto data = seg.payload().str();
     string full_data(data.begin(),data.end());
@@ -43,3 +45,5 @@ optional<WrappingInt32> TCPReceiver::ackno() const {
 }
 
 size_t TCPReceiver::window_size() const { return _capacity - _reassembler.stream_out().buffer_size(); }
+
+

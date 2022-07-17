@@ -79,12 +79,6 @@ class TCPSender {
     // recive max ackno
     uint64_t _max_ackno{0};
 
-    // ackno to send
-    std::optional<WrappingInt32> _send_ackno{0};
-
-    // window_size to send (my win)
-    size_t _send_win_size{0};
-
     class UnackSegment {
       public:
         uint64_t _seqno;
@@ -158,16 +152,10 @@ class TCPSender {
     WrappingInt32 next_seqno() const { return wrap(_next_seqno, _isn); }
     //!@}
 
-    void set_ack(WrappingInt32 to_ackno) {
-      _send_ackno = to_ackno;
-    }
+    void send_rst_seg();
 
-    void set_recv_win_size(size_t win_size) {
-      _recv_win_size = win_size;
-    }
+    bool close_send() {return _close;}
 
-    // 设置ackno win
-    void set_send_header(TCPHeader &tcp_header);
 };
 
 
