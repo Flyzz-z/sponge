@@ -70,7 +70,7 @@ optional<InternetDatagram> NetworkInterface::recv_frame(const EthernetFrame &fra
         ParseResult res = arp_mes.parse(Buffer(frame.payload()));
         if (res == ParseResult::NoError) {
             // learn
-            arp_table[arp_mes.sender_ip_address] = ARPTableEntry(arp_mes.sender_ethernet_address, 0);
+            arp_table[arp_mes.sender_ip_address] = ArpTableEntry(arp_mes.sender_ethernet_address, 0);
             if (arp_mes.opcode == ARPMessage::OPCODE_REQUEST &&
                 arp_mes.target_ip_address == _ip_address.ipv4_numeric()) {
                 send_arp(ARPMessage::OPCODE_REPLY, arp_mes.sender_ip_address,arp_mes.sender_ethernet_address);
