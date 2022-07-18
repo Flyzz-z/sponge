@@ -42,11 +42,16 @@ class NetworkInterface {
     //! outbound queue of Ethernet frames that the NetworkInterface wants sent
     std::queue<EthernetFrame> _frames_out{};
 
-    struct ArpTableEntry
+    struct ARPTableEntry
     {
-      size_t _time_since_created;
-      EthernetAddress _eth_addr;
-      ArpTableEntry(EthernetAddress eth_addr,size_t time_since_created):
+      size_t _time_since_created{};
+      EthernetAddress _eth_addr{};
+      ARPTableEntry(){}
+      ARPTableEntry(const ARPTableEntry& rhs) {
+        this->_eth_addr = rhs._eth_addr;
+        this->_time_since_created = rhs._time_since_created;
+      }
+      ARPTableEntry(EthernetAddress eth_addr,size_t time_since_created):
       _time_since_created(time_since_created),
       _eth_addr(eth_addr){}
     };
@@ -58,7 +63,7 @@ class NetworkInterface {
       IPData(InternetDatagram ip_data,Address next_hop):_ip_data(ip_data),_next_hop(next_hop){}
     };
 
-    std::unordered_map<uint32_t,ArpTableEntry> arp_table{};
+    std::unordered_map<uint32_t,ARPTableEntry> arp_table{};
 
     std::unordered_map<uint32_t,size_t> last_arp_req{};
 
@@ -87,7 +92,7 @@ class NetworkInterface {
     //! \brief Called periodically when time elapses
     void tick(const size_t ms_since_last_tick);
 
-    void send_arp(const uint16_t opcode,const uint32_t target_ip);
+    void send_arp(const uint16_t opcode,const uint32_t target_ip,const std::optional<EthernetAddress> target_eth);
 };
 
 #endif  // SPONGE_LIBSPONGE_NETWORK_INTERFACE_HH
