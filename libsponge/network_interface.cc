@@ -45,7 +45,7 @@ void NetworkInterface::send_datagram(const InternetDatagram &dgram, const Addres
             last_arp_req[next_hop_ip] = 0;
             send_arp(ARPMessage::OPCODE_REQUEST, next_hop_ip,{});
         }
-        data_to_send.push_back(IPData(dgram, next_hop));
+        data_to_send[next_hop_ip].push_back(IPData(dgram,next_hop));
         return;
     }
 
@@ -77,13 +77,12 @@ optional<InternetDatagram> NetworkInterface::recv_frame(const EthernetFrame &fra
             }
 
             // resend ipdata
-            for (auto it = data_to_send.begin(); it != data_to_send.end();) {
-                if(it->_next_hop.ipv4_numeric()==arp_mes.sender_ip_address) {
-                    send_datagram(it->_ip_data,it->_next_hop);
-                    data_to_send.erase(it++);
-                } else {
-                    it++;
+            auto it = data_to_send.find(arp_mes.sender_ip_address);
+            if(it!=data_to_send.end()) {
+                for(auto ip_data:it->second) {
+                    send_datagram(ip_data._ip_data,ip_data._next_hop);
                 }
+                data_to_send.erase(it);
             }
         }
     }

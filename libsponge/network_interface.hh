@@ -67,7 +67,7 @@ class NetworkInterface {
 
     std::unordered_map<uint32_t,size_t> last_arp_req{};
 
-    std::list<IPData> data_to_send{};
+    std::unordered_map<uint32_t,std::list<IPData> > data_to_send{};
 
   public:
     //! \brief Construct a network interface with given Ethernet (network-access-layer) and IP (internet-layer) addresses

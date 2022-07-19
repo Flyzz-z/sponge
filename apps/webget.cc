@@ -10,7 +10,7 @@ using namespace std;
 void get_URL(const string &host, const string &path) {
     // Your code here.
     Address addr(host,"http");
-    CS144TCPSocket socket;
+    FullStackSocket socket;
     socket.connect(addr);
     socket.write("GET "+path+" HTTP/1.1\r\n");
     socket.write("Host: cs144.keithw.org\r\n");
